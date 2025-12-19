@@ -1,101 +1,159 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Inventory Management System</title>
+
 <style>
-  body { font-family: Arial, sans-serif; margin: 20px; }
-  table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-  th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-  th { background-color: #f4f4f4; }
-  input[type="text"], input[type="number"] { padding: 5px; margin: 5px; }
-  button { padding: 5px 10px; margin: 5px; }
+  body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+  }
+
+  h1, h2 {
+    margin-bottom: 10px;
+  }
+
+  form input, form button {
+    padding: 8px;
+    margin: 5px 0;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+  }
+
+  th, td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: center;
+  }
+
+  th {
+    background-color: #f4f4f4;
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  .btn-delete {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    padding: 5px 8px;
+  }
+
+  .btn-edit {
+    background: #3498db;
+    color: white;
+    border: none;
+    padding: 5px 8px;
+  }
 </style>
 </head>
+
 <body>
 
 <h1>Inventory Management System</h1>
 
-<h2>Add New Item</h2>
+<h2>Add Item</h2>
 <form id="addItemForm">
-  <input type="text" id="itemName" placeholder="Item Name" required />
-  <input type="number" id="itemQuantity" placeholder="Quantity" required />
-  <input type="number" step="0.01" id="itemPrice" placeholder="Price" required />
-  <button type="submit">Add Item</button>
+  <input type="text" id="itemName" placeholder="Item Name" required>
+  <input type="number" id="itemQuantity" placeholder="Quantity" min="1" required>
+  <input type="number" id="itemPrice" placeholder="Price" min="0" step="0.01" required>
+  <button type="submit">Add</button>
 </form>
 
 <h2>Inventory List</h2>
-<table id="inventoryTable">
+<table>
   <thead>
     <tr>
-      <th>Item Name</th>
+      <th>Name</th>
       <th>Quantity</th>
       <th>Price</th>
       <th>Actions</th>
     </tr>
   </thead>
-  <tbody>
-    <!-- Inventory items will appear here -->
-  </tbody>
+  <tbody id="inventoryBody"></tbody>
 </table>
 
 <script>
-  const inventory = [];
+  let inventory = JSON.parse(localStorage.getItem("inventory")) || [];
 
-  const form = document.getElementById('addItemForm');
-  const tableBody = document.querySelector('#inventoryTable tbody');
+  const form = document.getElementById("addItemForm");
+  const tableBody = document.getElementById("inventoryBody");
 
-  form.addEventListener('submit', function(e) {
+  form.addEventListener("submit", e => {
     e.preventDefault();
-    const name = document.getElementById('itemName').value.trim();
-    const quantity = parseInt(document.getElementById('itemQuantity').value);
-    const price = parseFloat(document.getElementById('itemPrice').value);
 
-    // Add item to inventory
+    const name = itemName.value.trim();
+    const quantity = Number(itemQuantity.value);
+    const price = Number(itemPrice.value);
+
+    if (!name || quantity <= 0 || price < 0) {
+      alert("Invalid input.");
+      return;
+    }
+
     inventory.push({ name, quantity, price });
-    renderTable();
+    saveAndRender();
     form.reset();
   });
 
+  function saveAndRender() {
+    localStorage.setItem("inventory", JSON.stringify(inventory));
+    renderTable();
+  }
+
   function renderTable() {
-    tableBody.innerHTML = '';
+    tableBody.innerHTML = "";
+
     inventory.forEach((item, index) => {
-      const row = document.createElement('tr');
+      const row = document.createElement("tr");
 
       row.innerHTML = `
         <td>${item.name}</td>
         <td>${item.quantity}</td>
-        <td>$${item.price.toFixed(2)}</td>
+        <td>₱${item.price.toFixed(2)}</td>
         <td>
-          <button onclick="deleteItem(${index})">Delete</button>
-          <button onclick="editItem(${index})">Edit</button>
+          <button class="btn-edit" onclick="editItem(${index})">Edit</button>
+          <button class="btn-delete" onclick="deleteItem(${index})">Delete</button>
         </td>
       `;
+
       tableBody.appendChild(row);
     });
   }
 
   function deleteItem(index) {
-    inventory.splice(index, 1);
-    renderTable();
+    if (confirm("Delete this item?")) {
+      inventory.splice(index, 1);
+      saveAndRender();
+    }
   }
 
   function editItem(index) {
     const item = inventory[index];
-    const newName = prompt('Enter new name:', item.name);
-    const newQuantity = prompt('Enter new quantity:', item.quantity);
-    const newPrice = prompt('Enter new price:', item.price);
 
-    if (newName !== null && newQuantity !== null && newPrice !== null) {
+    const name = prompt("Item name:", item.name);
+    const qty = prompt("Quantity:", item.quantity);
+    const price = prompt("Price:", item.price);
+
+    if (name && qty > 0 && price >= 0) {
       inventory[index] = {
-        name: newName.trim(),
-        quantity: parseInt(newQuantity),
-        price: parseFloat(newPrice)
+        name: name.trim(),
+        quantity: Number(qty),
+        price: Number(price)
       };
-      renderTable();
+      saveAndRender();
     }
   }
+
+  renderTable();
 </script>
 
 </body>
